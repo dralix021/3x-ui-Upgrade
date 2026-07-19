@@ -1,18 +1,13 @@
-FROM alpine:3.20 AS base
-
-# ========================================================
-# مرحله نهایی
-# ========================================================
 FROM alpine:3.20
 
 ENV TZ=Asia/Tehran \
     XUI_IN_DOCKER=true \
     XUI_MAIN_FOLDER=/app \
     XUI_ENABLE_FAIL2BAN=true \
-    XUI_DB_TYPE=postgres \
     NGINX_PORT=${NGINX_PORT:-${PORT:-3000}} \
     WEB_BASE_PATH="/admin-panel-login"
 
+# نصب تمام وابستگی‌ها
 RUN apk add --no-cache --update \
     ca-certificates \
     tzdata \
@@ -22,6 +17,7 @@ RUN apk add --no-cache --update \
     nginx \
     postgresql-client \
     fail2ban \
+    gettext \          # ← مهم: برای envsubst
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/cache/apk/* /tmp/*
@@ -38,14 +34,10 @@ RUN mkdir -p /app /etc/x-ui /var/log/x-ui /run/nginx \
     && mv /usr/local/x-ui/* /app/ \
     && chmod +x /app/x-ui /app/x-ui.sh
 
-# کپی فایل‌ها
 COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY start.sh /start.sh
 
 RUN chmod +x /start.sh
-
-# **حذف VOLUME** (Railway Volumes جایگزین آن می‌شود)
-# VOLUME ["/etc/x-ui", "/root/.acme.sh"]
 
 EXPOSE ${NGINX_PORT}
 
